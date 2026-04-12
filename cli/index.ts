@@ -345,11 +345,51 @@ const sub = program.command("sub").description("订阅管理");
 sub
   .command("update <url>")
   .description("更新订阅（下载 → 验证 → merge → 重启）")
-  .action(async (url) => {
+  .action(async (url: string) => {
     const { cfg } = getCtx();
     info(`正在更新订阅: ${url}`);
     await updateSubscription(url, cfg);
     ok("订阅更新成功，mihomo 已重启");
+  });
+
+sub
+  .command("reload")
+  .description("用当前保存的订阅 URL 重新拉取（等价于 clashupdate）")
+  .action(async () => {
+    const { cfg } = getCtx();
+    const fsmod = await import("node:fs");
+    const urlFile = `${cfg.base}/url`;
+    let savedUrl: string;
+    try {
+      savedUrl = fsmod.readFileSync(urlFile, "utf-8").trim();
+    } catch {
+      err(`未找到订阅 URL 文件: ${urlFile}`);
+      process.exit(1);
+      return;
+    }
+    if (!savedUrl) {
+      err("订阅 URL 为空，请先执行 sub update <url>");
+      process.exit(1);
+      return;
+    }
+    info(`正在重新更新订阅: ${savedUrl}`);
+    await updateSubscription(savedUrl, cfg);
+    ok("订阅更新成功，mihomo 已重启");
+  });
+
+sub
+  .command("show")
+  .description("显示当前保存的订阅 URL")
+  .action(async () => {
+    const { cfg } = getCtx();
+    const fsmod = await import("node:fs");
+    const urlFile = `${cfg.base}/url`;
+    try {
+      const url = fsmod.readFileSync(urlFile, "utf-8").trim();
+      console.log(`当前订阅: ${C.cyan}${url}${C.reset}`);
+    } catch {
+      err(`未找到订阅 URL 文件: ${urlFile}`);
+    }
   });
 
 // ── mixin ─────────────────────────────────────────────────────────────────────

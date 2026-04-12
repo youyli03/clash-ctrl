@@ -26,10 +26,16 @@ export class ClashMixin {
     return (yaml.load(raw) as Record<string, unknown>) ?? {};
   }
 
-  /** 写回 mixin.yaml */
+  /** 写回 mixin.yaml（通过 sudo tee，因文件属 root） */
   write(obj: Record<string, unknown>): void {
     const content = yaml.dump(obj, { lineWidth: -1, noRefs: true });
-    fs.writeFileSync(this.mixinPath, content, "utf-8");
+    const result = spawnSync("sudo", ["tee", this.mixinPath], {
+      input: content,
+      encoding: "utf-8",
+    });
+    if (result.status !== 0) {
+      throw new Error(`写入 mixin.yaml 失败: ${result.stderr}`);
+    }
   }
 
   /** 在 rules 数组头部追加一条规则（如 "DOMAIN,example.com,DIRECT"） */
@@ -118,7 +124,14 @@ export class ClashMixin {
       throw new Error(`yq merge 失败: ${result.stderr}`);
     }
 
-    fs.writeFileSync(this.runtimePath, result.stdout, "utf-8");
+    // runtime.yaml 属 root，通过 sudo tee 写入
+    const teeResult = spawnSync("sudo", ["tee", this.runtimePath], {
+      input: result.stdout,
+      encoding: "utf-8",
+    });
+    if (teeResult.status !== 0) {
+      throw new Error(`写入 runtime.yaml 失败: ${teeResult.stderr}`);
+    }
   }
 
   /** 重启 mihomo 服务 */
