@@ -1,0 +1,23 @@
+{
+  "name": "clash-ctrl",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Mihomo/Clash Meta controller — CLI tool & MCP server",
+  "bin": {
+    "clash-ctrl": "./cli/index.ts"
+  },
+  "scripts": {
+    "cli": "bun run cli/index.ts",
+    "mcp": "bun run mcp/index.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "commander": "^12.0.0",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.0.0"
+  }
+}
