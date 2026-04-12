@@ -33,16 +33,24 @@ export async function updateSubscription(url: string, cfg: ClashConfig): Promise
   // 1. 备份（备份文件也属 root，用 sudo cp）
   spawnSync("sudo", ["cp", configRawPath, bakPath], { encoding: "utf-8" });
 
-  // 2. 下载
+  // 2. 下载（用 curl --noproxy '*' 绕过系统代理，避免 clash 认证导致 407）
   let newContent: string;
   {
-    const res = await fetch(url, {
-      signal: AbortSignal.timeout(30_000),
-    });
-    if (!res.ok) {
-      throw new Error(`下载失败: ${res.status} ${res.statusText}`);
+    const curlResult = spawnSync(
+      "curl",
+      [
+        "--noproxy", "*",          // 绕过 http_proxy 等环境变量，直连
+        "-fsSL",                   // fail on error, silent, follow redirects
+        "--max-time", "30",
+        "-A", "ClashMeta",         // 订阅服务通常要求 Clash 兼容 UA
+        url,
+      ],
+      { encoding: "utf-8", maxBuffer: 50 * 1024 * 1024 }
+    );
+    if (curlResult.status !== 0) {
+      throw new Error(`下载失败: ${curlResult.stderr || "curl 返回非零退出码"}`);
     }
-    newContent = await res.text();
+    newContent = curlResult.stdout;
   }
 
   // 3. 写入 config.yaml（属 root，用 sudo tee）
