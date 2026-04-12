@@ -8,7 +8,8 @@
   },
   "scripts": {
     "cli": "bun run cli/index.ts",
-    "mcp": "bun run mcp/index.ts"
+    "mcp": "bun run mcp/index.ts",
+    "setup-sudo": "bash scripts/setup-sudo.sh"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
