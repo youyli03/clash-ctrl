@@ -16,9 +16,18 @@
 # ── clash-ctrl 路径（自动检测）────────────────────────────────────────────────
 _CLASH_CTRL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/.." 2>/dev/null && pwd)"
 # 优先用绝对路径（兼容非登录 shell，如 MCSM 启动环境）
-_BUN_BIN="${BUN_INSTALL:-$HOME/.bun}/bin/bun"
-if [[ ! -x "$_BUN_BIN" ]]; then
-    _BUN_BIN="$(command -v bun 2>/dev/null || echo bun)"
+# 按优先级查找 bun：显式绝对路径 > BUN_INSTALL 环境变量 > $HOME > PATH
+_BUN_BIN=""
+for _bun_candidate in \
+    "/home/lyy/.bun/bin/bun" \
+    "${BUN_INSTALL:+${BUN_INSTALL}/bin/bun}" \
+    "${HOME:+${HOME}/.bun/bin/bun}" \
+    "$(command -v bun 2>/dev/null)"; do
+    [[ -n "$_bun_candidate" && -x "$_bun_candidate" ]] && { _BUN_BIN="$_bun_candidate"; break; }
+done
+unset _bun_candidate
+if [[ -z "$_BUN_BIN" ]]; then
+    _BUN_BIN="bun"  # last resort, will fail with clear error
 fi
 _CLASH_CTRL_BIN="$_BUN_BIN run --cwd $_CLASH_CTRL_DIR cli/index.ts"
 
