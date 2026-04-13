@@ -15,7 +15,12 @@
 
 # ── clash-ctrl 路径（自动检测）────────────────────────────────────────────────
 _CLASH_CTRL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/.." 2>/dev/null && pwd)"
-_CLASH_CTRL_BIN="bun run --cwd $_CLASH_CTRL_DIR cli/index.ts"
+# 优先用绝对路径（兼容非登录 shell，如 MCSM 启动环境）
+_BUN_BIN="${BUN_INSTALL:-$HOME/.bun}/bin/bun"
+if [[ ! -x "$_BUN_BIN" ]]; then
+    _BUN_BIN="$(command -v bun 2>/dev/null || echo bun)"
+fi
+_CLASH_CTRL_BIN="$_BUN_BIN run --cwd $_CLASH_CTRL_DIR cli/index.ts"
 
 # ── 系统代理管理（clashon/clashoff 保留的核心功能）───────────────────────────
 _clash_ctrl_set_proxy() {
